@@ -1,0 +1,68 @@
+name: Code Quality & Security Check
+
+on:
+  push:
+    branches-ignore:
+      - "main"
+  pull_request:
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required for Gitleaks to scan history
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # --- SECURITY STEP 1: Secret Scanning ---
+      - name: Gitleaks Secret Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Pipeline fails if secrets are found in the code.
+
+      # --- BACKEND ---
+      - name: Backend Install
+        working-directory: ./backend
+        run: npm ci
+
+      # --- SECURITY STEP 2: Dependency Audit ---
+      - name: Backend Security Audit
+        working-directory: ./backend
+        # audit-level=high: Reports and fails only on serious vulnerabilities.
+        run: npm audit --audit-level=high
+
+      - name: Backend Lint & Type Check
+        working-directory: ./backend
+        run: |
+          npm run lint
+          npm run typecheck
+
+      - name: Backend Tests
+        working-directory: ./backend
+        run: npm run test --if-present
+
+      # --- FRONTEND ---
+      - name: Frontend Install
+        working-directory: ./frontend
+        run: npm ci
+
+      # --- SECURITY STEP 3: Dependency Audit (Frontend) ---
+      - name: Frontend Security Audit
+        working-directory: ./frontend
+        run: npm audit --audit-level=high
+
+      - name: Frontend Lint & Build
+        working-directory: ./frontend
+        run: |
+          npm run lint
+          npm run build
+
+      - name: Frontend Tests
+        working-directory: ./frontend
+        run: npm run test --if-present
