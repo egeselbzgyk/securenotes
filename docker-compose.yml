@@ -1,0 +1,7 @@
+services:
+  postgresql:
+    image: postgres
+    env_file:
+      - backend/.env
+    ports:
+      - "5433:5432"
