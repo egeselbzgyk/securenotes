@@ -1,9 +1,7 @@
 import express, { Request, Response } from "express";
 import helmet from "helmet";
 import cors from "cors";
-import dotenv from "dotenv";
-
-dotenv.config();
+import { prisma } from "./lib/prisma";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,11 +18,22 @@ app.use(
 
 app.use(express.json({ limit: "10kb" }));
 
-app.get("/", (req: Request, res: Response) => {
-  res.json({
-    message: "API is running!",
-    timestamp: new Date(),
-  });
+app.get("/", async (req: Request, res: Response) => {
+  try {
+    const userCount = await prisma.user.count();
+    res.json({
+      message: "API is running!",
+      database_status: "Connected",
+      user_count: userCount,
+      timestamp: new Date(),
+    });
+  } catch (error) {
+    console.error("Database Connection Error:", error);
+    res.status(500).json({
+      message: "API is running but Database connection failed.",
+      error: String(error),
+    });
+  }
 });
 
 app.listen(PORT, () => {

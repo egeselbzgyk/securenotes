@@ -26,6 +26,7 @@ lerna-debug.log*
 backend/generated/prisma
 *.sqlite
 *.sqlite-journal
+backend/src/generated
 
 # Editor directories
 .idea
