@@ -6,9 +6,87 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../src/generated/client"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum NoteVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String   @unique
+  passwordHash  String
+
+  // Email verification
+  emailVerifiedAt    DateTime?
+  emailVerificationTokenHash String? @unique
+  emailVerificationTokenSentAt DateTime?
+
+  // Againt brute-force attacks
+  failedLoginAttempts Int      @default(0)
+  lockedUntil        DateTime?
+
+  // Password reset
+  passwordResetTokenHash String? @unique
+  passwordResetTokenSentAt DateTime?
+
+  // Session management
+  passwordChangedAt DateTime?
+  lastLoginAt     DateTime?
+
+  isActive   Boolean  @default(true) // If the user banned or deactivated
+  deletedAt DateTime? // For soft-delete
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  identities UserIdentity[]
+  notes      Note[]
+  apiKeys    ApiKey[]
+}
+
+model UserIdentity {
+  id        String   @id @default(uuid())
+  provider  String   // e.g.: 'GitHub', 'Google'
+  providerId String  // The ID in the provider
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerId])
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  title     String?
+  content   String
+
+  visibility NoteVisibility @default(PRIVATE)
+
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ApiKey {
+  id        String   @id @default(uuid())
+  key       String   @unique // The actual API key value but hashed
+  name      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  isActive  Boolean  @default(true)
+  expiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

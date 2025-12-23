@@ -8,6 +8,22 @@ on:
 jobs:
   quality-check:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     permissions:
       contents: read
       pull-requests: read
@@ -42,12 +58,19 @@ jobs:
       - name: Backend Lint & Type Check
         working-directory: ./backend
         run: |
+          npx prisma generate
           npm run lint
           npm run typecheck
 
       - name: Backend Tests
         working-directory: ./backend
-        run: npm run test --if-present
+        env:
+          DATABASE_URL: "postgresql://test_user:test_password@localhost:5432/test_db?schema=public"
+        run: |
+          echo "DATABASE_URL=postgresql://test_user:test_password@localhost:5432/test_db?schema=public" > .env
+          npx prisma generate
+          npx prisma db push --accept-data-loss
+          npm run test --if-present
 
       # --- FRONTEND ---
       - name: Frontend Install
