@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import helmet from "helmet";
 import cors from "cors";
 import { prisma } from "./lib/prisma";
+import notesRoutes from "./notes/notes.routes";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,6 +18,8 @@ app.use(
 );
 
 app.use(express.json({ limit: "10kb" }));
+
+app.use("/notes", notesRoutes);
 
 app.get("/", async (req: Request, res: Response) => {
   try {
