@@ -88,7 +88,7 @@ export const searchNotes = async (
   return await prisma.note.findMany({
     where: {
       AND: [
-        // @ts-ignore
+        // @ts-expect-error: Prisma dynamic AND/OR types are complex and difficult to infer here.
         searchCondition,
         visibilityCondition,
       ],

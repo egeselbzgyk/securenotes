@@ -70,16 +70,16 @@ export const getAllNotesHandler = async (req: Request, res: Response) => {
 
 export const searchNotesHandler = async (req: Request, res: Response) => {
   try {
-    let { query, type } = req.query;
+    const { query, type } = req.query;
 
     if (typeof query !== "string") {
       res.status(400).json({ message: "Invalid search term." });
       return;
     }
 
-    query = query.trim();
+    const trimmedQuery = query.trim();
 
-    if (!query) {
+    if (!trimmedQuery) {
       res.status(200).json([]);
       return;
     }
@@ -90,8 +90,7 @@ export const searchNotesHandler = async (req: Request, res: Response) => {
       return;
     }
 
-    // type: 'own' | 'public' | undefined
-    const notes = await searchNotes(query, userId, type as string);
+    const notes = await searchNotes(trimmedQuery, userId, type as string);
 
     res.status(200).json(notes);
   } catch (error) {
