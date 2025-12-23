@@ -12,7 +12,7 @@ export const createNoteHandler = async (req: Request, res: Response) => {
   try {
     const validatedData = createNoteSchema.parse(req.body);
 
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
 
     if (!userId) {
       res.status(401).json({ message: "User login has not been performed." });
@@ -55,7 +55,7 @@ export const getNoteByIdHandler = async (req: Request, res: Response) => {
 
 export const getAllNotesHandler = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
     if (!userId) {
       res.status(401).json({ message: "User login has not been performed." });
       return;
@@ -84,7 +84,7 @@ export const searchNotesHandler = async (req: Request, res: Response) => {
       return;
     }
 
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
     if (!userId) {
       res.status(401).json({ message: "User login has not been performed." });
       return;
