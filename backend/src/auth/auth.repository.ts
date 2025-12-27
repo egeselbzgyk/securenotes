@@ -33,6 +33,51 @@ export const authRepository = {
       },
     });
   },
+
+  async updateLoginFailure(
+    userId: string,
+    data: {
+      failedLoginAttempts: number;
+      lockedUntil: Date | null;
+    }
+  ) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: {
+        failedLoginAttempts: data.failedLoginAttempts,
+        lockedUntil: data.lockedUntil,
+      },
+      select: { id: true },
+    });
+  },
+
+  async updateLoginSuccess(userId: string) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: {
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+        lastLoginAt: new Date(),
+      },
+      select: { id: true },
+    });
+  },
+
+  async updatePassword(
+    userId: string,
+    data: { passwordHash: string; passwordChangedAt: Date }
+  ) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash: data.passwordHash,
+        passwordChangedAt: data.passwordChangedAt,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+      },
+      select: { id: true },
+    });
+  },
 };
 
 export const findUserByEmailVerificationToken = (

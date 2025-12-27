@@ -27,11 +27,38 @@ const sanitizeMarkdown = (rawHtml: string) => {
         "allow",
         "allowfullscreen",
         "frameborder",
+        "sandbox",
       ],
       div: ["class"],
     },
-    allowedSchemes: ["http", "https", "mailto", "data", "tel", "ftp"],
+    allowedSchemes: ["http", "https", "mailto", "tel", "ftp"],
     allowedIframeHostnames: ["www.youtube.com", "youtu.be", "youtube.com"],
+    // Transform function to remove dangerous attributes and iframes
+    transformTags: {
+      // Generic cleaner for all tags to remove data-* and event handlers
+      "*": (tagName, attribs) => {
+        const cleanAttribs: Record<string, string> = {};
+        for (const key in attribs) {
+          // Block data-* attributes
+          if (key.startsWith("data-")) {
+            continue;
+          }
+          // Block event handlers (onclick, onmouseover, etc.)
+          if (key.toLowerCase().startsWith("on")) {
+            continue;
+          }
+          cleanAttribs[key] = attribs[key];
+        }
+        return { tagName, attribs: cleanAttribs };
+      },
+      iframe: (tagName, attribs) => {
+        // Remove iframes with javascript: src
+        if (attribs.src && attribs.src.startsWith("javascript:")) {
+          return { tagName: "", attribs: {} };
+        }
+        return { tagName, attribs };
+      },
+    },
   });
 };
 

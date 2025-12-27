@@ -67,6 +67,18 @@ class MailService {
       html: verifyEmailHtml(payload),
     });
   }
+
+  async sendResetPasswordEmail(to: string, payload: VerifyEmailPayload) {
+    if (!mailConfig.enabled) return;
+
+    await this.transporter.sendMail({
+      from: mailConfig.from,
+      to,
+      subject: "Passwort zurücksetzen",
+      text: verifyEmailText(payload),
+      html: verifyEmailHtml(payload),
+    });
+  }
 }
 
 export const mailService = new MailService();

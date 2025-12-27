@@ -12,6 +12,6 @@ export function createRateLimiter({
     max,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { ok: true },
+    message: { ok: false },
   });
 }

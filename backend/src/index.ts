@@ -1,14 +1,45 @@
 import express, { Request, Response } from "express";
 import helmet from "helmet";
 import cors from "cors";
+import { createRateLimiter } from "./shared/middlewares/rateLimit";
 import { prisma } from "./lib/prisma";
 import notesRoutes from "./notes/notes.routes";
 import authRoutes from "./auth/auth.routes";
+import cookieParser from "cookie-parser";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(helmet());
+// Apply rate limiting to prevent DDoS attacks
+const apiLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+});
+app.use(apiLimiter);
+
+// Helmet with security headers including CSP
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "https://cdn.tailwindcss.com"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https://*.ytimg.com"],
+        frameSrc: [
+          "https://www.youtube.com",
+          "https://www.youtube-nocookie.com",
+          "https://youtu.be",
+        ],
+        connectSrc: ["'self'", "ws://localhost:*"],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        frameAncestors: ["'self'"],
+      },
+    },
+  })
+);
 
 app.use(
   cors({
@@ -17,6 +48,8 @@ app.use(
     credentials: true, // Cookie transfer
   })
 );
+
+app.use(cookieParser());
 
 app.use(express.json({ limit: "10kb" }));
 app.set("trust proxy", 1);
@@ -34,7 +67,6 @@ app.get("/", async (req: Request, res: Response) => {
       timestamp: new Date(),
     });
   } catch (error) {
-    console.error("Database Connection Error:", error);
     res.status(500).json({
       message: "API is running but Database connection failed.",
       error: String(error),

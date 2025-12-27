@@ -9,4 +9,7 @@ export class AuthError extends Error {
   static conflict(code: string) {
     return new AuthError(409, code);
   }
+  static unauthorized(code: string) {
+    return new AuthError(401, code);
+  }
 }

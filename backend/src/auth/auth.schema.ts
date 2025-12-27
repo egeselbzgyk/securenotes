@@ -18,19 +18,24 @@ export const passwordSchema = z
     message: "Passwort muss mindestens ein Sonderzeichen enthalten.",
   });
 
-/* TO-DO
-export const updatePasswordSchema = z
+export const resetRequestSchema = z
   .object({
-    currentPassword: passwordSchema,
-    password: passwordSchema,
-    confirmPassword: passwordSchema,
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwörter stimmen nicht überein.",
-    path: ["confirmPassword"],
+    email: z.string().trim().toLowerCase().pipe(z.email()),
   })
   .strict();
-  */
+
+export const resetValidateSchema = z
+  .object({
+    token: z.string().min(20),
+  })
+  .strict();
+
+export const resetConfirmSchema = z
+  .object({
+    token: z.string().min(20),
+    newPassword: passwordSchema,
+  })
+  .strict();
 
 export const nameSchema = z
   .string()
@@ -79,3 +84,10 @@ export const resendSchema = z.object({
 export const verifySchema = z.object({
   token: z.string().length(64),
 });
+
+export const loginSchema = z
+  .object({
+    email: z.string().trim().toLowerCase().max(254).pipe(z.email()),
+    password: z.string().min(8).max(64),
+  })
+  .strict();

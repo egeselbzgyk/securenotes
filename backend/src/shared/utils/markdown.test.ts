@@ -3,26 +3,26 @@ import sanitizeMarkdown from "./markdownSanitizer";
 
 describe("Markdown & Security Utilities", () => {
   describe("parserMarkdown", () => {
-    it("should render standard markdown to HTML", () => {
+    it("should render standard markdown to HTML", async () => {
       const markdown = "# Title\n**bold** and *italic*";
-      const html = parserMarkdown(markdown);
+      const html = await parserMarkdown(markdown);
       expect(html).toContain("<h1>Title</h1>");
       expect(html).toContain("<strong>bold</strong>");
       expect(html).toContain("em");
     });
 
-    it("should convert YouTube embed syntax to an iframe", () => {
+    it("should convert YouTube embed syntax to an iframe", async () => {
       const markdown =
         "![Video](embed:https://www.youtube.com/watch?v=dQw4w9WgXcQ)";
-      const html = parserMarkdown(markdown);
+      const html = await parserMarkdown(markdown);
       expect(html).toContain('<div class="video-container">');
       expect(html).toContain("<iframe");
       expect(html).toContain('src="https://www.youtube.com/embed/dQw4w9WgXcQ"');
     });
 
-    it("should return error message for unsupported YouTube URLs", () => {
+    it("should return error message for unsupported YouTube URLs", async () => {
       const markdown = "![Video](embed:https://vimeo.com/12345)";
-      const html = parserMarkdown(markdown);
+      const html = await parserMarkdown(markdown);
       expect(html).toContain("[Unsupported YouTube URL]");
     });
   });
@@ -69,14 +69,14 @@ describe("Markdown & Security Utilities", () => {
   });
 
   describe("Integrated Flow (Parse -> Sanitize)", () => {
-    it("should securely handle a complex malicious markdown input", () => {
+    it("should securely handle a complex malicious markdown input", async () => {
       const maliciousMarkdown =
         "# Title\n" +
         "![Video](embed:https://www.youtube.com/watch?v=12345678901)\n" +
         "<script>console.log('hacked')</script>\n" +
         "<img src=x onerror=alert(1)>";
 
-      const parsed = parserMarkdown(maliciousMarkdown);
+      const parsed = await parserMarkdown(maliciousMarkdown);
       const sanitized = sanitizeMarkdown(parsed);
 
       expect(sanitized).toContain("<h1>Title</h1>");
