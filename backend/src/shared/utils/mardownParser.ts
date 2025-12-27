@@ -39,9 +39,9 @@ renderer.image = ({
   return `<img src="${href}" alt="${text}" title="${title || ""}" />`;
 };
 
-const parserMarkdown = (markdown: string) => {
-  // Cast to string as we are using it synchronously
-  return marked(markdown, { renderer }) as string;
+const parserMarkdown = async (markdown: string) => {
+  // marked returns a Promise in newer versions, so we need to await it
+  return (await marked(markdown, { renderer })) as string;
 };
 
 export default parserMarkdown;

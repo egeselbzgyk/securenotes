@@ -33,10 +33,6 @@ model User {
   failedLoginAttempts Int      @default(0)
   lockedUntil        DateTime?
 
-  // Password reset
-  passwordResetTokenHash String? @unique
-  passwordResetTokenSentAt DateTime?
-
   // Session management
   passwordChangedAt DateTime?
   lastLoginAt     DateTime?
@@ -50,7 +46,53 @@ model User {
   identities UserIdentity[]
   notes      Note[]
   apiKeys    ApiKey[]
+  sessions   Session[]
+  passwordResetTokens PasswordResetToken[]
 }
+
+model Session {
+  id                 String   @id @default(uuid())
+
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  refreshTokenHash   String   @unique
+  expiresAt          DateTime
+
+  revokedAt          DateTime?
+  rotatedAt          DateTime?
+  replacedBySessionId String?
+  replacedBySession   Session? @relation("SessionRotation", fields: [replacedBySessionId], references: [id])
+  replacedSessions    Session[] @relation("SessionRotation")
+
+  userAgent          String?
+  ip                 String?
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  ip        String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
 
 model UserIdentity {
   id        String   @id @default(uuid())

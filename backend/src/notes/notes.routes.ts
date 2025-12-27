@@ -1,28 +1,22 @@
-import { Router, Request, Response, NextFunction } from "express";
+import { Router } from "express";
 import {
   createNoteHandler,
   getAllNotesHandler,
   getNoteByIdHandler,
   searchNotesHandler,
+  updateNoteHandler,
+  deleteNoteHandler,
 } from "./notes.controller";
+import { authMiddleware } from "../shared/middlewares/auth.middleware";
 
 const router = Router();
 
-const mockAuthMiddleware = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  req.user = {
-    id: "8e8d5e80-7fe5-408d-9ebb-d57625e5e7ac", //  user ID
-  };
-  next();
-};
-
-router.use(mockAuthMiddleware);
+router.use(authMiddleware);
 
 router.get("/", getAllNotesHandler);
 router.post("/", createNoteHandler);
 router.get("/search", searchNotesHandler);
 router.get("/:id", getNoteByIdHandler);
+router.put("/:id", updateNoteHandler);
+router.delete("/:id", deleteNoteHandler);
 export default router;
