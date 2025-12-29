@@ -32,7 +32,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgresql:5432/${POSTGRES_DB}?schema=public
       PORT: ${PORT}
       FRONTEND_URL: ${FRONTEND_URL}
-      API_BASE_URL: ${API_BASE_URL}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL}
       SMTP_HOST: mailpit
       SMTP_PORT: 1025
       SMTP_SECURE: "false"
