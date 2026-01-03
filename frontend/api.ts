@@ -33,7 +33,6 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}) {
   }
 
   // 2. Attach CSRF Token for state-changing requests (Double-submit pattern)
-  // Spec: "Applied to: All state-changing requests (POST, PUT, DELETE)"
   if (
     options.method &&
     ["POST", "PUT", "DELETE", "PATCH"].includes(options.method.toUpperCase())
@@ -53,75 +52,64 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}) {
     credentials: "include",
   };
 
-  try {
-    // Determine full URL (using relative paths as per standard SPA proxy setups or separate domain)
-    // Assuming backend is relative or proxy handles it. If strictly separate, env var needed.
-    // For this implementation, we assume relative pathing /api or direct.
-    // The prompt mentions /auth and /notes base paths.
-    // We will prefix with nothing or an env var if provided, assuming proxy in dev.
-    const url = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  const url = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
 
-    let response = await fetch(url, config);
+  let response = await fetch(url, config);
 
-    // 4. Handle 401 (Unauthorized) - Attempt Silent Refresh
-    // Condition: 401 and NOT already on the refresh endpoint
-    if (
-      response.status === 401 &&
-      !endpoint.includes("/auth/refresh") &&
-      !endpoint.includes("/auth/login")
-    ) {
-      try {
-        // Spec: POST /auth/refresh
-        // Requires refresh_token cookie (handled by credentials: include)
-        // Requires x-csrf-token header
-        const refreshCsrf = getCookie("csrf_token");
-        const refreshHeaders: Record<string, string> = {
-          "Content-Type": "application/json",
-        };
-        if (refreshCsrf) refreshHeaders["x-csrf-token"] = refreshCsrf;
+  // 4. Handle 401 (Unauthorized) - Attempt Silent Refresh
+  // Condition: 401 and NOT already on the refresh endpoint
+  if (
+    response.status === 401 &&
+    !endpoint.includes("/auth/refresh") &&
+    !endpoint.includes("/auth/login")
+  ) {
+    try {
+      // POST /auth/refresh
+      const refreshCsrf = getCookie("csrf_token");
+      const refreshHeaders: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (refreshCsrf) refreshHeaders["x-csrf-token"] = refreshCsrf;
 
-        const refreshResponse = await fetch("/auth/refresh", {
-          method: "POST",
-          headers: refreshHeaders,
-          credentials: "include",
-        });
+      const refreshResponse = await fetch("/auth/refresh", {
+        method: "POST",
+        headers: refreshHeaders,
+        credentials: "include",
+      });
 
-        if (refreshResponse.ok) {
-          const data = await refreshResponse.json();
-          if (data.ok && data.accessToken) {
-            setAccessToken(data.accessToken);
+      if (refreshResponse.ok) {
+        const data = await refreshResponse.json();
+        if (data.ok && data.accessToken) {
+          setAccessToken(data.accessToken);
 
-            // Retry original request with new token
-            headers["Authorization"] = `Bearer ${data.accessToken}`;
-            // If CSRF rotated, update it too
-            const newCsrf = getCookie("csrf_token");
-            if (newCsrf && headers["x-csrf-token"]) {
-              headers["x-csrf-token"] = newCsrf;
-            }
-
-            response = await fetch(url, { ...config, headers });
-          } else {
-            throw new Error("Refresh failed");
+          // Retry original request with new token
+          headers["Authorization"] = `Bearer ${data.accessToken}`;
+          // If CSRF rotated, update it too
+          const newCsrf = getCookie("csrf_token");
+          if (newCsrf && headers["x-csrf-token"]) {
+            headers["x-csrf-token"] = newCsrf;
           }
+
+          response = await fetch(url, { ...config, headers });
         } else {
           throw new Error("Refresh failed");
         }
-      } catch (e) {
-        setAccessToken(null);
-        window.dispatchEvent(new Event("auth:logout"));
-        throw e; // Propagate error so caller knows it failed
+      } else {
+        throw new Error("Refresh failed");
       }
+    } catch (e) {
+      setAccessToken(null);
+      window.dispatchEvent(new Event("auth:logout"));
+      throw e; // Propagate error so caller knows it failed
     }
-
-    // 5. Rate Limit Handling
-    if (response.status === 429) {
-      throw new Error("Zu viele Anfragen. Bitte später erneut versuchen.");
-    }
-
-    return response;
-  } catch (error) {
-    throw error;
   }
+
+  // 5. Rate Limit Handling
+  if (response.status === 429) {
+    throw new Error("Zu viele Anfragen. Bitte später erneut versuchen.");
+  }
+
+  return response;
 }
 
 // --- Domain Models ---
@@ -148,7 +136,6 @@ export const AuthApi = {
     });
     const json = await res.json();
     if (!res.ok || !json.ok) {
-      // Spec: "Generic 'Invalid credentials' for all 401 cases"
       throw new Error("Ungültige Anmeldedaten.");
     }
     return json; // { ok: true, accessToken: string }
@@ -173,7 +160,7 @@ export const AuthApi = {
   },
 
   refresh: async () => {
-    // Spec: POST /auth/refresh
+    // POST /auth/refresh
     const res = await apiFetch("/auth/refresh", { method: "POST" });
     if (!res.ok) throw new Error("Session expired");
     return res.json(); // { ok: true, accessToken: string }
@@ -181,7 +168,7 @@ export const AuthApi = {
 
   logout: async () => {
     try {
-      // Spec: POST /auth/logout
+      // POST /auth/logout
       await apiFetch("/auth/logout", { method: "POST" });
       setAccessToken(null);
     } catch (e) {
@@ -190,7 +177,7 @@ export const AuthApi = {
   },
 
   requestPasswordReset: async (email: string) => {
-    // Spec: POST /auth/password-reset/request
+    // POST /auth/password-reset/request
     // Always returns ok: true
     await apiFetch("/auth/password-reset/request", {
       method: "POST",
@@ -200,7 +187,7 @@ export const AuthApi = {
   },
 
   validatePasswordReset: async (token: string) => {
-    // Spec: POST /auth/password-reset/validate
+    // POST /auth/password-reset/validate
     // Validates if token is valid and not used/expired
     const res = await apiFetch("/auth/password-reset/validate", {
       method: "POST",
@@ -217,7 +204,7 @@ export const AuthApi = {
     token: string;
     newPassword: string;
   }) => {
-    // Spec: POST /auth/password-reset/confirm
+    // POST /auth/password-reset/confirm
     const res = await apiFetch("/auth/password-reset/confirm", {
       method: "POST",
       body: JSON.stringify(data),
@@ -237,7 +224,7 @@ export const AuthApi = {
   },
 
   verifyEmail: async (token: string) => {
-    // Spec: POST /auth/verify-email
+    // POST /auth/verify-email
     const res = await apiFetch("/auth/verify-email", {
       method: "POST",
       body: JSON.stringify({ token }),
@@ -251,15 +238,12 @@ export const AuthApi = {
 
 export const NotesApi = {
   list: async (params?: { search?: string; filter?: "own" | "public" }) => {
-    // Spec distinguishes between GET /notes/ and GET /notes/search
-
     let endpoint = "/notes/";
     const queryParams: Record<string, string> = {};
 
     if (params?.search) {
       endpoint = "/notes/search";
       queryParams.query = params.search;
-      // Spec: type (optional) - Filter: "own", "public"
       if (params.filter) queryParams.type = params.filter;
     } else {
       // Standard list now supports filter parameter
@@ -285,7 +269,7 @@ export const NotesApi = {
     content: string;
     visibility: Visibility;
   }) => {
-    // Spec: POST /notes/
+    // POST /notes/
     const res = await apiFetch("/notes/", {
       method: "POST",
       body: JSON.stringify(data),
@@ -294,15 +278,12 @@ export const NotesApi = {
     return (await res.json()) as Note;
   },
 
-  // Note: PUT/DELETE are not explicitly in the "Endpoint Inventory" of the prompt,
-  // but "Global API Overview" lists PUT and DELETE as supported methods.
-  // We assume standard RESTful paths /notes/:id based on standard conventions.
   update: async (
     id: string,
     data: { title?: string; content?: string; visibility?: Visibility }
   ) => {
     const res = await apiFetch(`/notes/${id}`, {
-      method: "PUT", // Assuming PUT for full update or strict compliance with Global Methods
+      method: "PUT",
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error("Fehler beim Speichern.");
@@ -312,6 +293,39 @@ export const NotesApi = {
   delete: async (id: string) => {
     const res = await apiFetch(`/notes/${id}`, { method: "DELETE" });
     if (!res.ok) throw new Error("Fehler beim Löschen.");
+    return true;
+  },
+};
+
+// --- API Key Types & Methods ---
+export interface ApiKey {
+  id: string;
+  name: string;
+  createdAt: string;
+  expiresAt: string | null;
+  lastUsedAt: string | null;
+  key?: string; // Only present immediately after creation
+}
+
+export const ApiKeyApi = {
+  list: async () => {
+    const res = await apiFetch("/api-keys");
+    if (!res.ok) throw new Error("Fehler beim Laden der API-Keys.");
+    return (await res.json()) as ApiKey[];
+  },
+
+  create: async (name: string, expiresInDays?: number) => {
+    const res = await apiFetch("/api-keys", {
+      method: "POST",
+      body: JSON.stringify({ name, expiresInDays }),
+    });
+    if (!res.ok) throw new Error("Fehler beim Erstellen des API-Keys.");
+    return (await res.json()) as ApiKey;
+  },
+
+  revoke: async (id: string) => {
+    const res = await apiFetch(`/api-keys/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Fehler beim Löschen des API-Keys.");
     return true;
   },
 };

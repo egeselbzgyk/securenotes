@@ -5,6 +5,7 @@ import { createRateLimiter } from "./shared/middlewares/rateLimit";
 import { prisma } from "./lib/prisma";
 import notesRoutes from "./notes/notes.routes";
 import authRoutes from "./auth/auth.routes";
+import apiKeysRoutes from "./api-keys/api-keys.routes";
 import cookieParser from "cookie-parser";
 
 const app = express();
@@ -56,6 +57,7 @@ app.set("trust proxy", 1);
 
 app.use("/notes", notesRoutes);
 app.use("/auth", authRoutes);
+app.use("/api-keys", apiKeysRoutes);
 
 app.get("/", async (req: Request, res: Response) => {
   try {
