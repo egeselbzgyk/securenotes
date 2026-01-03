@@ -45,9 +45,11 @@ export const ResetPassword: React.FC = () => {
       try {
         await AuthApi.validatePasswordReset(extractedToken);
         setStatus("form");
-      } catch (err) {
+      } catch {
         setStatus("error");
-        setMsg("Dieser Link ist bereits verwendet oder abgelaufen. Bitte fordern Sie einen neuen Link an.");
+        setMsg(
+          "Dieser Link ist bereits verwendet oder abgelaufen. Bitte fordern Sie einen neuen Link an."
+        );
         // Redirect to login after 3 seconds
         setTimeout(() => {
           navigate("/auth");
