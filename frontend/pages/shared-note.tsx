@@ -23,7 +23,7 @@ export const SharedNote: React.FC = () => {
         const data = await NotesApi.get(noteId);
         setNote(data);
         setLoading(false);
-      } catch (e) {
+      } catch {
         setError("Notiz nicht gefunden oder kein Zugriff");
         setLoading(false);
       }

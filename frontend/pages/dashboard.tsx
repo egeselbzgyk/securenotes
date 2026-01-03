@@ -4,6 +4,7 @@ import { NotesApi, Note } from "../api";
 import { Navbar } from "../components/dashboard/Navbar";
 import { Sidebar } from "../components/dashboard/Sidebar";
 import { NoteEditor } from "../components/dashboard/NoteEditor";
+import { ApiKeyManager } from "../components/dashboard/ApiKeyManager";
 
 export const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -18,6 +19,7 @@ export const Dashboard: React.FC = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isApiManagerOpen, setIsApiManagerOpen] = useState(false);
 
   // Copy toast state
   const [showCopyToast, setShowCopyToast] = useState(false);
@@ -45,8 +47,7 @@ export const Dashboard: React.FC = () => {
     if (selectedNote) {
       setEditTitle(selectedNote.title || "");
       setEditContent(selectedNote.content || "");
-      // If not owner, force preview.
-      // Note: We check authorId if available, otherwise assume 'own' filter implies ownership for simplicity if ID missing
+      // If not owner, force preview
       if (selectedNote.authorId && selectedNote.authorId !== user?.id) {
         setEditMode("preview");
       } else {
@@ -188,6 +189,7 @@ export const Dashboard: React.FC = () => {
         isMenuOpen={isMenuOpen}
         onMenuToggle={() => setIsMenuOpen(!isMenuOpen)}
         onLogout={logout}
+        onOpenApiManager={() => setIsApiManagerOpen(true)}
       />
 
       <div className="flex-1 flex overflow-hidden">
@@ -235,6 +237,12 @@ export const Dashboard: React.FC = () => {
           Link in die Zwischenablage kopiert!
         </div>
       )}
+
+      {/* API Key Manager Modal */}
+      <ApiKeyManager
+        isOpen={isApiManagerOpen}
+        onClose={() => setIsApiManagerOpen(false)}
+      />
     </div>
   );
 };

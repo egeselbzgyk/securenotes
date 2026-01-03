@@ -29,7 +29,7 @@ model User {
   emailVerificationTokenHash String? @unique
   emailVerificationTokenSentAt DateTime?
 
-  // Againt brute-force attacks
+  // Against brute-force attacks
   failedLoginAttempts Int      @default(0)
   lockedUntil        DateTime?
 
@@ -128,6 +128,7 @@ model ApiKey {
   
   isActive  Boolean  @default(true)
   expiresAt DateTime?
+  lastUsedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

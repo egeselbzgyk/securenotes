@@ -6,6 +6,7 @@ interface NavbarProps {
   isMenuOpen: boolean;
   onMenuToggle: () => void;
   onLogout: () => void;
+  onOpenApiManager: () => void;
 }
 
 const IconUser = () => (
@@ -29,6 +30,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   isMenuOpen,
   onMenuToggle,
   onLogout,
+  onOpenApiManager,
 }) => {
   return (
     <header className="h-14 border-b border-border-dark flex items-center justify-between px-4 bg-[#131920] z-10 shadow-sm">
@@ -60,6 +62,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 Impressum
               </Link>
+              <button
+                onClick={() => {
+                  onMenuToggle();
+                  onOpenApiManager();
+                }}
+                className="block w-full text-left px-4 py-2.5 hover:bg-input-dark hover:text-white transition-colors"
+              >
+                API Schlüssel
+              </button>
               <div className="border-t border-border-dark my-1"></div>
               <button
                 onClick={onLogout}
