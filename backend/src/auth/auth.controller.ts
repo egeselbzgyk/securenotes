@@ -25,10 +25,29 @@ export const createAuthHandler = async (req: Request, res: Response) => {
     res.status(201).json({ id: user.id });
   } catch (error) {
     if (error instanceof ZodError) {
-      res.status(400).json({ message: "Invalid data", errors: error.issues });
+      res.status(400).json({ message: "Ungültige Daten", errors: error.issues });
       return;
     }
-    res.status(500).json({ message: "Server error occurred." });
+    if (error instanceof AuthError) {
+      if (error.code === "WEAK_PASSWORD") {
+        res.status(400).json({
+          message:
+            "Dieses Passwort ist zu schwach. Es ähnelt häufig verwendeten oder leicht erratbaren Passwörtern.",
+        });
+        return;
+      }
+      if (error.code === "EMAIL_ALREADY_IN_USE") {
+        res.status(409).json({
+          message:
+            "Diese Aktion ist nicht möglich. Bitte versuchen Sie es erneut oder melden Sie sich an.",
+        });
+        return;
+      }
+      res.status(error.status).json({ message: error.message });
+      return;
+    }
+    console.error(error);
+    res.status(500).json({ message: "Ein Serverfehler ist aufgetreten." });
   }
 };
 
