@@ -5,18 +5,30 @@ import { Navbar } from "../components/dashboard/Navbar";
 import { Sidebar } from "../components/dashboard/Sidebar";
 import { NoteEditor } from "../components/dashboard/NoteEditor";
 import { ApiKeyManager } from "../components/dashboard/ApiKeyManager";
+import { useRouter } from "../router";
 
 export const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
+  const { path, navigate } = useRouter();
+
   const [notes, setNotes] = useState<Note[]>([]);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [filter, setFilter] = useState<"own" | "public">("own");
   const [isLoadingNote, setIsLoadingNote] = useState(false);
   const [isNewNote, setIsNewNote] = useState(false);
 
-  // Search state
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  // Parse search from URL
+  const getSearchFromUrl = () => {
+    try {
+      const [_, queryString] = path.split("?");
+      const params = new URLSearchParams(queryString);
+      return params.get("search") || "";
+    } catch {
+      return "";
+    }
+  };
+
+  const searchQuery = getSearchFromUrl();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isApiManagerOpen, setIsApiManagerOpen] = useState(false);
@@ -30,18 +42,10 @@ export const Dashboard: React.FC = () => {
   const [editMode, setEditMode] = useState<"edit" | "preview">("preview");
   const [isDirty, setIsDirty] = useState(false);
 
-  // Debounce search input
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 300);
-    return () => clearTimeout(handler);
-  }, [search]);
-
-  // Load notes when filter or debounced search changes
+  // Load notes when filter or search changes
   useEffect(() => {
     loadNotes();
-  }, [filter, debouncedSearch]);
+  }, [filter, searchQuery]);
 
   useEffect(() => {
     if (selectedNote) {
@@ -63,11 +67,23 @@ export const Dashboard: React.FC = () => {
 
   const loadNotes = async () => {
     try {
-      const data = await NotesApi.list({ search: debouncedSearch, filter });
+      const data = await NotesApi.list({ search: searchQuery, filter });
       setNotes(data || []);
     } catch (e) {
       console.error(e);
       setNotes([]);
+    }
+  };
+
+  const handleSearch = (term: string) => {
+    const trimmed = term.trim();
+    const currentBase = path.split("?")[0];
+    if (trimmed) {
+      const params = new URLSearchParams();
+      params.set("search", trimmed);
+      navigate(`${currentBase}?${params.toString()}`);
+    } else {
+      navigate(currentBase);
     }
   };
 
@@ -196,8 +212,8 @@ export const Dashboard: React.FC = () => {
         <Sidebar
           notes={notes}
           selectedNoteId={selectedNote?.id || null}
-          search={search}
-          onSearchChange={setSearch}
+          search={searchQuery}
+          onSearchChange={handleSearch}
           filter={filter}
           onFilterChange={setFilter}
           onCreateNote={handleCreateNote}
