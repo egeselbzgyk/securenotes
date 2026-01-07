@@ -141,7 +141,7 @@ export const AuthApi = {
     return json; // { ok: true, accessToken: string }
   },
 
-  register: async (data: { email: string; name: string; password: string }) => {
+  register: async (data: { email: string; password: string }) => {
     const res = await apiFetch("/auth/register", {
       method: "POST",
       body: JSON.stringify(data),

@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma";
+import { Prisma } from "../generated/client/client";
 
 export type CreateSessionInput = {
   userId: string;
@@ -9,8 +10,11 @@ export type CreateSessionInput = {
 };
 
 export const sessionRepository = {
-  async createSession(input: CreateSessionInput) {
-    return prisma.session.create({
+  async createSession(
+    input: CreateSessionInput,
+    tx: Prisma.TransactionClient | typeof prisma = prisma
+  ) {
+    return tx.session.create({
       data: {
         userId: input.userId,
         refreshTokenHash: input.refreshTokenHash,

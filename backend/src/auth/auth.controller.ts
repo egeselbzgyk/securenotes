@@ -211,7 +211,7 @@ export async function logoutAllHandler(req: Request, res: Response) {
   if (!req.auth) {
     return res.status(401).json({ ok: false });
   }
-  const userId = req.auth.userId; // access token'dan
+  const userId = req.auth.userId; // access token
 
   await authService.logoutAll(userId);
 
@@ -222,4 +222,55 @@ export async function logoutAllHandler(req: Request, res: Response) {
   });
 
   return res.status(200).json({ ok: true });
+}
+
+
+export async function googleLoginHandler(req: Request, res: Response) {
+  try {
+    const url = await authService.getGoogleAuthUrl();
+    return res.redirect(url);
+  } catch {
+    return res.status(500).json({ ok: false });
+  }
+}
+
+export async function googleLoginCallbackHandler(req: Request, res: Response) {
+  try {
+    const { code } = req.query;
+    if (!code || typeof code !== "string") {
+      return res.status(400).json({ ok: false });
+    }
+
+    const { refreshTokenPlain } = await authService.loginWithGoogle(
+      code,
+      {
+        userAgent: req.get("user-agent"),
+        ip: req.ip,
+      }
+    );
+
+    res.cookie(REFRESH_COOKIE_NAME, refreshTokenPlain, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: "lax",
+      path: "/auth/refresh",
+      maxAge: REFRESH_TOKEN_TTL_SECONDS * 1000,
+    });
+
+    const csrfToken = createCsrfToken();
+    res.cookie(CSRF_COOKIE_NAME, csrfToken, {
+      httpOnly: false,
+      secure: isProd,
+      sameSite: "lax", // Must share sameSite policy to be readable
+      path: "/",
+    });
+
+    // Redirect to frontend dashboard
+    return res.redirect(`${process.env.FRONTEND_BASE_URL}/#/dashboard`);
+  } catch {
+    // In case of error, redirect to login with error param
+    return res.redirect(
+      `${process.env.FRONTEND_BASE_URL}/#/auth?error=Google_Login_Failed`
+    );
+  }
 }

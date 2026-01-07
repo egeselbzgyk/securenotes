@@ -15,7 +15,6 @@ async function main() {
     update: {},
     create: {
       email: "test@example.com",
-      name: "Test User",
       passwordHash,
       emailVerifiedAt: new Date(), // Auto-verify for testing
     },

@@ -7,7 +7,6 @@ export const AuthPage: React.FC = () => {
   const { login, register } = useAuth();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [formData, setFormData] = useState({
-    name: "",
     email: "",
     password: "",
   });
@@ -73,7 +72,6 @@ export const AuthPage: React.FC = () => {
         await register({
           email: formData.email,
           password: formData.password,
-          name: formData.name,
         });
         setSuccess(
           "Bestätigungs-E-Mail gesendet. Bitte prüfe deinen Posteingang."
@@ -139,8 +137,8 @@ export const AuthPage: React.FC = () => {
                 }}
                 className={`flex-1 text-center cursor-pointer relative z-10 py-2 text-sm font-medium transition-colors rounded-md ${
                   mode === "login"
-                    ? "text-white bg-card-dark shadow-sm ring-1 ring-white/10"
-                    : "text-gray-400 hover:text-gray-200"
+                    ? "text-white bg-primary shadow-lg ring-1 ring-white/10 font-bold"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
                 }`}
               >
                 Einloggen
@@ -154,8 +152,8 @@ export const AuthPage: React.FC = () => {
                 }}
                 className={`flex-1 text-center cursor-pointer relative z-10 py-2 text-sm font-medium transition-colors rounded-md ${
                   mode === "register"
-                    ? "text-white bg-card-dark shadow-sm ring-1 ring-white/10"
-                    : "text-gray-400 hover:text-gray-200"
+                    ? "text-white bg-primary shadow-lg ring-1 ring-white/10 font-bold"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
                 }`}
               >
                 Anmelden
@@ -190,27 +188,7 @@ export const AuthPage: React.FC = () => {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
-                {mode === "register" && (
-                  <div className="space-y-1.5">
-                    <label
-                      className="block text-sm font-medium text-gray-300"
-                      htmlFor="name"
-                    >
-                      Name
-                    </label>
-                    <input
-                      id="name"
-                      type="text"
-                      required
-                      placeholder="Ihr vollständiger Name"
-                      className="block w-full rounded-lg border-border-dark bg-input-dark text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm h-11 px-4 placeholder-gray-500 transition-colors outline-none border focus:ring-1"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                    />
-                  </div>
-                )}
+
 
                 <div className="space-y-1.5">
                   <label
@@ -311,12 +289,9 @@ export const AuthPage: React.FC = () => {
                   )}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    alert("Google Login wird in dieser Demo nicht unterstützt.")
-                  }
-                  className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-border-dark rounded-lg shadow-sm bg-input-dark text-sm font-medium text-gray-200 hover:bg-[#2a323d] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 transition-all active:scale-[0.98]"
+                <a
+                  href={`${import.meta.env.VITE_API_URL || "http://localhost:3000"}/auth/login/google`}
+                  className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-transparent rounded-lg shadow-sm bg-white text-sm font-bold text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition-all active:scale-[0.98]"
                 >
                   <svg className="h-5 w-5" viewBox="0 0 24 24">
                     <path
@@ -337,7 +312,7 @@ export const AuthPage: React.FC = () => {
                     ></path>
                   </svg>
                   <span>Mit Google anmelden</span>
-                </button>
+                </a>
 
                 <div className="relative">
                   <div
@@ -356,7 +331,7 @@ export const AuthPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-lg text-sm font-bold uppercase tracking-wider text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading
                     ? "Lädt..."

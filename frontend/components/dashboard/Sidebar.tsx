@@ -63,7 +63,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {filter === "own" && (
           <Button
             onClick={onCreateNote}
-            className="w-full flex justify-center items-center gap-2 py-2 text-sm bg-primary hover:bg-primary-hover border border-transparent"
+            className="w-full flex justify-center items-center gap-2 py-2 text-sm font-bold bg-primary hover:bg-primary-hover border border-transparent shadow-lg shadow-primary/30 active:scale-[0.98] transition-all"
           >
             <span className="material-symbols-outlined text-[18px]">add</span>
             Neue Notiz
