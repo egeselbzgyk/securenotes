@@ -15,6 +15,7 @@ export const ResetPassword: React.FC = () => {
   const [newPassword, setNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
 
   useEffect(() => {
     const validateToken = async () => {
@@ -62,7 +63,36 @@ export const ResetPassword: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError("");
     setIsSubmitting(true);
+
+    // Client-side validation
+    if (newPassword.length < 8) {
+      setFormError("Das Passwort muss mindestens 8 Zeichen lang sein.");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      setFormError("Das Passwort muss mindestens einen Großbuchstaben enthalten.");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!/[a-z]/.test(newPassword)) {
+      setFormError("Das Passwort muss mindestens einen Kleinbuchstaben enthalten.");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      setFormError("Das Passwort muss mindestens eine Zahl enthalten.");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!/[-+!@#$%^&*]/.test(newPassword)) {
+      setFormError("Das Passwort muss mindestens ein Sonderzeichen enthalten.");
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       await AuthApi.confirmPasswordReset({
         token,
@@ -71,11 +101,25 @@ export const ResetPassword: React.FC = () => {
       // Log out the user after successful password reset
       logout();
       setStatus("success");
-    } catch (e) {
-      setStatus("error");
-      setMsg(
-        e instanceof Error ? e.message : "Passwort zurücksetzen fehlgeschlagen."
-      );
+    } catch (e: any) {
+      // If it's a validation error/weak password from backend, stay on form
+      const message = e.message || "Passwort zurücksetzen fehlgeschlagen.";
+      if (
+        message.includes("WEAK_PASSWORD") ||
+        message.includes("Must contain") || // common zod errors
+        message.includes("Passwort")
+      ) {
+        setFormError(
+          message === "WEAK_PASSWORD"
+            ? "Das Passwort ist zu schwach/leicht zu erraten."
+            : message
+        );
+        setStatus("form");
+      } else {
+        // Fatal error (token invalid etc)
+        setStatus("error");
+        setMsg(message);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -98,6 +142,14 @@ export const ResetPassword: React.FC = () => {
               Neues Passwort festlegen
             </h2>
             <form onSubmit={handleSubmit} className="space-y-5">
+              {formError && (
+                <div className="rounded-lg bg-red-900/20 p-3 border border-red-900/30 text-red-400 text-sm flex items-start">
+                  <span className="material-symbols-outlined text-lg mr-2">
+                    error
+                  </span>
+                  {formError}
+                </div>
+              )}
               <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-gray-300">
                   Neues Passwort

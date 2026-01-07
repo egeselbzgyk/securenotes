@@ -9,6 +9,13 @@ import { normalizeEmail } from "../shared/utils/normalizeEmail";
 import { REFRESH_TOKEN_TTL_SECONDS } from "./token/token.config";
 import { sessionRepository } from "./session.repository";
 import { resetRepository } from "./reset/reset.repository";
+import { OAuth2Client } from "google-auth-library";
+
+const googleClient = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI
+);
 
 type RefreshInput = {
   refreshTokenPlain: string;
@@ -28,7 +35,7 @@ const RESET_TTL_MS = 30 * 60 * 1000; // 30 minutes
 export const authService = {
   async register(dto: RegisterDto) {
     const email = normalizeEmail(dto.email);
-    const name = dto.name.trim();
+
 
     const existingUser = await authRepository.findUserByEmail(email);
     if (existingUser) {
@@ -36,13 +43,12 @@ export const authService = {
     }
 
     // Assert strong password
-    passwordService.assertStrong(dto.password, { userInputs: [email, name] });
+    passwordService.assertStrong(dto.password, { userInputs: [email] });
     const passwordHash = await passwordService.hash(dto.password);
 
     const result = await prisma.$transaction(async (tx) => {
       const user = await authRepository.createUser(tx, {
         email,
-        name,
         emailVerifiedAt: null,
         passwordHash,
       });
@@ -69,14 +75,12 @@ export const authService = {
     });
 
     await mailService.sendVerifyEmail(result.user.email, {
-      name: result.user.name,
       link: `${process.env.FRONTEND_BASE_URL}/verify-email?token=${result.tokenPlain}`,
     });
 
     return {
       id: result.user.id,
       email: result.user.email,
-      name: result.user.name,
       token: result.tokenPlain,
       emailVerified: !!result.user.emailVerifiedAt,
     };
@@ -250,7 +254,6 @@ export const authService = {
     });
 
     await mailService.sendResetPasswordEmail(user.email, {
-      name: user.name,
       link: `${process.env.FRONTEND_URL}/reset-password?token=${tokenPlain}`,
     });
     return { ok: true as const };
@@ -299,5 +302,109 @@ export const authService = {
   async logoutAll(userId: string) {
     await sessionRepository.revokeAllForUser(userId);
     return { ok: true as const };
+  },
+
+  async getGoogleAuthUrl() {
+    return googleClient.generateAuthUrl({
+      access_type: "offline",
+      scope: [
+        "https://www.googleapis.com/auth/userinfo.profile",
+        "https://www.googleapis.com/auth/userinfo.email",
+      ],
+      prompt: "consent",
+    });
+  },
+
+  async loginWithGoogle(
+    code: string,
+    meta: { userAgent?: string; ip?: string }
+  ) {
+    const { tokens } = await googleClient.getToken(code);
+    googleClient.setCredentials(tokens);
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: tokens.id_token!,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+
+    if (!payload || !payload.email) {
+      throw AuthError.unauthorized("INVALID_GOOGLE_TOKEN");
+    }
+
+    const { email, sub: googleId } = payload;
+    const normalizedEmail = normalizeEmail(email);
+
+    // Transaction to find/create user and log them in
+    return await prisma.$transaction(async (tx) => {
+      // 1. Try to find by Identity
+      let user = await tx.user.findFirst({
+        where: {
+          identities: {
+            some: {
+              provider: "GOOGLE",
+              providerId: googleId,
+            },
+          },
+        },
+      });
+
+      // 2. If not found, try to find by Email to link account
+      if (!user) {
+        user = await authRepository.findUserByEmail(normalizedEmail, tx);
+
+        if (user) {
+          // Link account
+          await authRepository.createIdentity(tx, {
+            user: { connect: { id: user.id } },
+            provider: "GOOGLE",
+            providerId: googleId,
+          });
+        } else {
+          // 3. Create new user
+          const passwordHash = await passwordService.hash(
+            Math.random().toString(36).slice(-8) +
+              Math.random().toString(36).slice(-8)
+          ); // Random password for oauth users
+
+          user = await authRepository.createUser(tx, {
+            email: normalizedEmail,
+            emailVerifiedAt: new Date(), // Verified by Google
+            passwordHash,
+          });
+
+          await authRepository.createIdentity(tx, {
+            user: { connect: { id: user.id } },
+            provider: "GOOGLE",
+            providerId: googleId,
+          });
+        }
+      }
+
+      // 4. Create Session (Login)
+      if (!user.isActive) throw AuthError.unauthorized("USER_INACTIVE");
+
+      const { tokenPlain: refreshTokenPlain, tokenHash: refreshTokenHash } =
+        tokenService.createRefreshToken();
+
+      const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_SECONDS * 1000);
+      const session = await sessionRepository.createSession(
+        {
+          userId: user.id,
+          refreshTokenHash,
+          expiresAt,
+          userAgent: meta.userAgent ?? null,
+          ip: meta.ip ?? null,
+        },
+        tx
+      );
+
+      const accessToken = await tokenService.createAccessToken({
+        userId: user.id,
+        sessionId: session.id,
+      });
+
+      return { accessToken, refreshTokenPlain };
+    });
   },
 };

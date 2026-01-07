@@ -37,14 +37,6 @@ export const resetConfirmSchema = z
   })
   .strict();
 
-export const nameSchema = z
-  .string()
-  .min(6, { message: "Name muss mindestens 6 Zeichen lang sein." })
-  .max(32, { message: "Name muss höchstens 32 Zeichen lang sein." })
-  .regex(/^[a-zA-Z0-9]+$/, {
-    message: "Name darf nur Buchstaben und Zahlen enthalten.",
-  });
-
 function extractDomain(email: string) {
   const i = email.lastIndexOf("@");
   return i === -1 ? "" : email.slice(i + 1);
@@ -69,7 +61,6 @@ export const emailSchema = z
 export const createAuthSchema = z
   .object({
     email: emailSchema,
-    name: nameSchema,
     password: passwordSchema,
   })
   .strict();

@@ -63,7 +63,6 @@ export async function resendVerification(
   await authRepository.updateUserVerificationToken(user.id, tokenHash);
 
   await mailService.sendVerifyEmail(user.email, {
-    name: user.name,
     link: `${process.env.FRONTEND_BASE_URL}/verify-email?token=${tokenPlain}`,
   });
 

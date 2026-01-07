@@ -9,6 +9,8 @@ import {
   passwordResetRequestHandler,
   passwordResetValidateHandler,
   logoutAllHandler,
+  googleLoginHandler,
+  googleLoginCallbackHandler,
 } from "./auth.controller";
 import { createRateLimiter } from "../shared/middlewares/rateLimit";
 import {
@@ -100,4 +102,16 @@ router.post(
   passwordResetConfirmHandler
 );
 
+router.get(
+  "/login/google",
+  createRateLimiter({ windowMs: 60 * 1000, max: 10 }),
+  googleLoginHandler
+);
+
+router.get(
+  "/login/google/callback",
+  createRateLimiter({ windowMs: 60 * 1000, max: 10 }),
+  googleLoginCallbackHandler
+);
+  
 export default router;

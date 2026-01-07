@@ -2,7 +2,6 @@ import { mailConfig } from "../config/mail";
 import nodemailer, { Transporter } from "nodemailer";
 
 type VerifyEmailPayload = {
-  name: string;
   link: string;
 };
 
@@ -15,22 +14,21 @@ function escapeHtml(s: string) {
     .replaceAll("'", "&#039;");
 }
 
-function verifyEmailHtml({ name, link }: VerifyEmailPayload) {
-  const safeName = escapeHtml(name);
+function verifyEmailHtml({ link }: VerifyEmailPayload) {
   const safeLink = escapeHtml(link);
 
   return `
   <div style="font-family:system-ui,Segoe UI,Roboto,Arial;line-height:1.4">
     <h2>E-Mail bestätigen</h2>
-    <p>Hallo ${safeName},</p>
+    <p>Hallo,</p>
     <p>bitte bestätige deine E-Mail-Adresse, indem du auf den folgenden Link klickst:</p>
     <p><a href="${safeLink}">E-Mail bestätigen</a></p>
     <p>Falls du dich nicht registriert hast, ignoriere diese Nachricht.</p>
   </div>`;
 }
 
-function verifyEmailText({ name, link }: VerifyEmailPayload) {
-  return `Hallo ${name},
+function verifyEmailText({ link }: VerifyEmailPayload) {
+  return `Hallo,
 
 bitte bestätige deine E-Mail-Adresse über diesen Link:
 ${link}
