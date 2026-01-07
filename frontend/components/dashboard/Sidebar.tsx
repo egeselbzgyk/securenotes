@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Input, Button } from "../ui";
 import { Note } from "../../api";
 
@@ -23,19 +23,44 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCreateNote,
   onNoteSelect,
 }) => {
+  const [localSearch, setLocalSearch] = useState(search);
+
+  useEffect(() => {
+    setLocalSearch(search);
+  }, [search]);
+
+  const handleSearchSubmit = () => {
+    onSearchChange(localSearch);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearchSubmit();
+    }
+  };
+
   return (
     <aside className="w-72 border-r border-border-dark bg-background-dark flex flex-col">
       <div className="p-4 border-b border-border-dark space-y-3 bg-[#131920]">
-        <div className="relative">
-          <span className="absolute left-3 top-2.5 text-gray-500 material-symbols-outlined text-[20px]">
-            search
-          </span>
-          <Input
-            placeholder="Notizen durchsuchen..."
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10 bg-input-dark border-border-dark text-white placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary"
-          />
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Input
+              placeholder="Suchen..."
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="bg-input-dark border-border-dark text-white placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary w-full"
+            />
+          </div>
+          <Button
+            onClick={handleSearchSubmit}
+            className="px-3 bg-primary hover:bg-primary-hover text-white rounded-md flex items-center justify-center transition-colors"
+            title="Suchen"
+          >
+            <span className="material-symbols-outlined text-[20px]">
+              search
+            </span>
+          </Button>
         </div>
         <div className="flex rounded-lg bg-input-dark p-1 border border-border-dark">
           <button

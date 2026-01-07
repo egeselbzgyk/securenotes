@@ -40,8 +40,7 @@ renderer.image = ({
 };
 
 const parserMarkdown = async (markdown: string) => {
-  // marked returns a Promise in newer versions, so we need to await it
-  return (await marked(markdown, { renderer })) as string;
+  return (await marked(markdown, { renderer, breaks: true })) as string;
 };
 
 export default parserMarkdown;
