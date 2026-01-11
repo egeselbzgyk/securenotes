@@ -4,7 +4,7 @@
   "main": "index.js",
   "overrides": {
     "cross-spawn": "^7.0.5",
-    "glob": "^10.5.0"
+    "glob": "^11.1.0"
   },
   "scripts": {
     "postinstall": "prisma generate",
@@ -20,6 +20,7 @@
   "author": "",
   "license": "ISC",
   "description": "",
+  "//": "Force rebuild to fix dependencies",
   "dependencies": {
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
