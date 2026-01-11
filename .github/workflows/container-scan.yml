@@ -1,19 +1,26 @@
 name: Container Security Scan
 on:
   workflow_run:
-    workflows: ["deploy-to-registry.yml"]
+    workflows: ["Deploy to Registry"]
     types: [completed]
 
 jobs:
   trivy-scan:
     runs-on: ubuntu-latest
-    env:
-      DOCKER_IMAGE_NAME: ${{ github.repository }}:latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
-      - name: Run Trivy
+      - name: Scan Backend Image
         uses: aquasecurity/trivy-action@0.33.1
         with:
-          image-ref: ${{ needs.deploy-to-registry.outputs.IMAGE_NAME }}
-          format: "sarif"
+          image-ref: "ghcr.io/${{ github.repository }}/backend:latest"
+          format: "table"
+          exit-code: "1"
+          severity: "CRITICAL,HIGH"
+
+      - name: Scan Frontend Image
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: "ghcr.io/${{ github.repository }}/frontend:latest"
+          format: "table"
           exit-code: "1"
           severity: "CRITICAL,HIGH"
