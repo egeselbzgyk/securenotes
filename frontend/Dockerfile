@@ -4,7 +4,11 @@ FROM node:20-alpine as builder
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install
+
+# Install dependencies
+RUN npm install --prefer-offline --no-audit
+
+RUN npm install @rollup/rollup-linux-x64-musl --no-save --no-audit
 
 COPY . .
 RUN npm run build
@@ -23,4 +27,3 @@ EXPOSE 80
 
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
-

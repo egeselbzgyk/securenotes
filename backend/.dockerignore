@@ -1,6 +1,12 @@
 node_modules
-dist
 npm-debug.log
-.env
 .git
 .gitignore
+*.md
+.env
+.env.*
+dist
+coverage
+.vscode
+.idea
+src/generated

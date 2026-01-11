@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "overrides": {
-    "cross-spawn": "^7.0.5",
-    "glob": "^11.1.0"
+    "cross-spawn": "7.0.6",
+    "glob": "11.1.0"
   },
   "scripts": {
     "postinstall": "prisma generate",

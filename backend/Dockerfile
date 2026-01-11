@@ -4,11 +4,9 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm ci --ignore-scripts
+RUN npm install --prefer-offline --no-audit
 COPY prisma ./prisma
 COPY prisma.config.ts ./
-
-RUN npm ci
 
 COPY . .
 

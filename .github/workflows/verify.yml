@@ -75,7 +75,9 @@ jobs:
       # --- FRONTEND ---
       - name: Frontend Install
         working-directory: ./frontend
-        run: npm ci
+        run: |
+          npm ci
+          npm install @rollup/rollup-linux-x64-gnu --no-save --no-audit --prefer-offline
 
       # --- SECURITY STEP 3: Dependency Audit (Frontend) ---
       - name: Frontend Security Audit
