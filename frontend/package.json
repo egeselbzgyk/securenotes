@@ -3,6 +3,11 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "overrides": {
+    "cross-spawn": "^7.0.5",
+    "glob": "^11.1.0",
+    "rollup": "^4.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
