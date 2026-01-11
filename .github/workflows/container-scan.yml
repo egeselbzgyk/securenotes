@@ -1,0 +1,19 @@
+name: Container Security Scan
+on:
+  workflow_run:
+    workflows: ["deploy-to-registry.yml"]
+    types: [completed]
+
+jobs:
+  trivy-scan:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_IMAGE_NAME: ${{ github.repository }}:latest
+    steps:
+      - name: Run Trivy
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: ${{ needs.deploy-to-registry.outputs.IMAGE_NAME }}
+          format: "sarif"
+          exit-code: "1"
+          severity: "CRITICAL,HIGH"
