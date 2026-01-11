@@ -1,0 +1,65 @@
+site_name: SecureNotes - Projektdokumentation
+site_url: https://egeselbzgyk.github.io/securenotes/
+repo_url: https://github.com/egeselbzgyk/securenotes
+repo_name: securenotes
+
+nav:
+  - Home: index.md
+  - Projektübersicht: 1-projektuebersicht.md
+  - Gruppenmitglieder: 2-gruppenmitglieder.md
+  - Verwendete Technologien: 3-technologien.md
+  - Architekturübersicht: 4-architektur.md
+  - Sicherheitskonzept: 5-sicherheitskonzept.md
+  - Datenschutz: 6-datenschutz.md
+  - CI/CD & DevSecOps: 7-cicd.md
+  - Docker & Deployment: 8-docker.md
+  - Umgebungsvariablen: 9-umgebungsvariablen.md
+  - Lokale Ausführung: 10-lokale-ausfuehrung.md
+  - Einsatz von KI: 11-ki-einsatz.md
+  - Bekannte Schwachstellen: 12-schwachstellen.md
+
+theme:
+  name: readthedocs
+  language: de
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+plugins:
+  - search
+  - social:
+      cards: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - tables
+  - footnotes
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
