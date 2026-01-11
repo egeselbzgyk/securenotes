@@ -1,9 +1,9 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { AuthApi, setAccessToken } from './api';
-import { useRouter } from './router';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { AuthApi, setAccessToken } from "./api";
+import { useRouter } from "./router";
 
 // The backend Login/Refresh response only returns { ok, accessToken }.
-// It does NOT return the User object. 
+// It does NOT return the User object.
 // We must extract the User ID (sub) from the JWT.
 interface User {
   id: string;
@@ -22,38 +22,46 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 };
 
 // Helper to parse JWT payload
 function parseJwt(token: string) {
-    try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        return JSON.parse(jsonPayload);
-    } catch (e) {
-        return null;
-    }
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      window
+        .atob(base64)
+        .split("")
+        .map(function (c) {
+          return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
 }
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { navigate } = useRouter();
 
   const handleToken = (token: string, emailHint?: string) => {
-      setAccessToken(token);
-      const payload = parseJwt(token);
-      if (payload && payload.sub) {
-          setUser({ 
-              id: payload.sub,
-              email: emailHint // We try to persist email if we know it, otherwise it's undefined
-          });
-      }
+    setAccessToken(token);
+    const payload = parseJwt(token);
+    if (payload && payload.sub) {
+      setUser({
+        id: payload.sub,
+        email: emailHint, // We try to persist email if we know it, otherwise it's undefined
+      });
+    }
   };
 
   // Initial session check - Run only once on mount
@@ -61,16 +69,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const initAuth = async () => {
       try {
         // Create a timeout promise (e.g., 1000ms) to prevent hanging if backend is down
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Backend timeout')), 1000)
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Backend timeout")), 1000)
         );
 
         // Attempt silent refresh, but race against the timeout
         // If backend is unreachable, timeout wins and we go to catch block -> loading=false
-        const data = await Promise.race([AuthApi.refresh(), timeoutPromise]) as any;
-        
+        const data = (await Promise.race([
+          AuthApi.refresh(),
+          timeoutPromise,
+        ])) as any;
+
         if (data && data.ok && data.accessToken) {
-            handleToken(data.accessToken);
+          handleToken(data.accessToken);
         }
       } catch (err) {
         // Session invalid, network error, or timeout - strictly logged out
@@ -89,17 +100,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const handleLogoutEvent = () => {
       setUser(null);
       setAccessToken(null);
-      navigate('/auth');
+      navigate("/auth");
     };
-    window.addEventListener('auth:logout', handleLogoutEvent);
-    return () => window.removeEventListener('auth:logout', handleLogoutEvent);
+    window.addEventListener("auth:logout", handleLogoutEvent);
+    return () => window.removeEventListener("auth:logout", handleLogoutEvent);
   }, [navigate]);
+
+  useEffect(() => {
+    const handleRateLimit = (e: CustomEvent) => {
+      const { remainingSeconds } = e.detail;
+      alert(
+        `Zu viele Anfragen. Bitte warten Sie ${remainingSeconds} Sekunden.`
+      );
+    };
+
+    window.addEventListener("rateLimit", handleRateLimit);
+    return () => window.removeEventListener("rateLimit", handleRateLimit);
+  }, []);
 
   const login = async (creds: { email: string; password: string }) => {
     const data = await AuthApi.login(creds);
     if (data.ok && data.accessToken) {
-        handleToken(data.accessToken, creds.email);
-        navigate('/');
+      handleToken(data.accessToken, creds.email);
+      navigate("/");
     }
   };
 
@@ -113,7 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await AuthApi.logout();
     setUser(null);
     setAccessToken(null);
-    navigate('/auth');
+    navigate("/auth");
   };
 
   return (

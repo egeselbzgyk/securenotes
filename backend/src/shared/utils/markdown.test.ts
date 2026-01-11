@@ -48,7 +48,7 @@ describe("Markdown & Security Utilities", () => {
       const cleanHtml = sanitizeMarkdown(rawHtml);
       expect(cleanHtml).toContain('<div class="video-container">');
       expect(cleanHtml).toContain(
-        '<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ">'
+        '<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" sandbox="allow-scripts allow-same-origin">'
       );
     });
 

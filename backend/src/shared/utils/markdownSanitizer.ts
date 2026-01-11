@@ -56,7 +56,13 @@ const sanitizeMarkdown = (rawHtml: string) => {
         if (attribs.src && attribs.src.startsWith("javascript:")) {
           return { tagName: "", attribs: {} };
         }
-        return { tagName, attribs };
+        return {
+          tagName,
+          attribs: {
+            ...attribs,
+            sandbox: attribs.sandbox || "allow-scripts allow-same-origin",
+          },
+        };
       },
     },
   });

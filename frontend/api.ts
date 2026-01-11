@@ -106,7 +106,18 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}) {
 
   // 5. Rate Limit Handling
   if (response.status === 429) {
-    throw new Error("Zu viele Anfragen. Bitte später erneut versuchen.");
+    const retryAfter = parseInt(response.headers.get("retry-after") || "0");
+    const remainingSeconds = Math.max(0, retryAfter);
+
+    window.dispatchEvent(
+      new CustomEvent("rateLimit", {
+        detail: { remainingSeconds },
+      })
+    );
+
+    throw new Error(
+      `Zu viele Anfragen. Bitte warten Sie ${remainingSeconds} Sekunden.`
+    );
   }
 
   return response;
