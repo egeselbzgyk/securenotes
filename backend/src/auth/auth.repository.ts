@@ -106,3 +106,57 @@ export const verifyUserEmail = (userId: string, tx: DbClient = prisma) => {
     },
   });
 };
+
+// OAuth State Management
+export const createOAuthState = async (
+  state: string,
+  provider: string,
+  meta: {
+    ip?: string | null;
+    userAgent?: string | null;
+  }
+) => {
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+  return prisma.oAuthState.create({
+    data: {
+      state,
+      provider,
+      expiresAt,
+      ip: meta.ip,
+      userAgent: meta.userAgent,
+    },
+  });
+};
+
+export const findAndConsumeOAuthState = async (state: string) => {
+  const now = new Date();
+
+  const oAuthState = await prisma.oAuthState.findFirst({
+    where: {
+      state,
+      expiresAt: { gt: now },
+      consumedAt: null,
+    },
+  });
+
+  if (!oAuthState) {
+    return null;
+  }
+
+  // Mark as consumed to prevent replay attacks
+  await prisma.oAuthState.update({
+    where: { id: oAuthState.id },
+    data: { consumedAt: now },
+  });
+
+  return oAuthState;
+};
+
+export const cleanupExpiredOAuthStates = async () => {
+  const now = new Date();
+  return prisma.oAuthState.deleteMany({
+    where: {
+      expiresAt: { lt: now },
+    },
+  });
+};

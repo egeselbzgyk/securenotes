@@ -188,8 +188,6 @@ export const AuthPage: React.FC = () => {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
-
-
                 <div className="space-y-1.5">
                   <label
                     className="block text-sm font-medium text-gray-300"
@@ -290,7 +288,9 @@ export const AuthPage: React.FC = () => {
                 </div>
 
                 <a
-                  href={`${import.meta.env.VITE_API_URL || "http://localhost:3000"}/auth/login/google`}
+                  href={`${
+                    import.meta.env.VITE_API_URL || "http://localhost:3000"
+                  }/auth/login/google`}
                   className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-transparent rounded-lg shadow-sm bg-white text-sm font-bold text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition-all active:scale-[0.98]"
                 >
                   <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -361,11 +361,10 @@ export const AuthPage: React.FC = () => {
           <div className="px-6 py-4 bg-[#131920] border-t border-border-dark text-center">
             <p className="text-xs text-gray-500">
               Mit der Anmeldung akzeptieren Sie unsere{" "}
-              <a className="underline hover:text-gray-300" href="#">
-                AGB
-              </a>{" "}
-              und{" "}
-              <a className="underline hover:text-gray-300" href="/datenschutz">
+              <a
+                className="underline hover:text-gray-300"
+                href="/#/datenschutz"
+              >
                 Datenschutzrichtlinie
               </a>
               .
