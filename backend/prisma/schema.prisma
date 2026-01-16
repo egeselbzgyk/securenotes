@@ -105,6 +105,23 @@ model UserIdentity {
   @@unique([provider, providerId])
 }
 
+model OAuthState {
+  id        String   @id @default(uuid())
+
+  state     String   @unique
+  provider  String   // e.g.: 'Google'
+  expiresAt DateTime
+
+  ip        String?
+  userAgent String?
+
+  consumedAt DateTime? // When state was used in callback
+
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
 model Note {
   id        String   @id @default(uuid())
   title     String?

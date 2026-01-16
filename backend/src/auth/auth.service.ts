@@ -1,6 +1,11 @@
 import { prisma } from "../lib/prisma";
 import { passwordService } from "./password.service";
-import { authRepository } from "./auth.repository";
+import {
+  authRepository,
+  createOAuthState,
+  findAndConsumeOAuthState,
+  cleanupExpiredOAuthStates,
+} from "./auth.repository";
 import { LoginDto, RegisterDto } from "./auth.types";
 import { tokenService } from "./token/token.service";
 import { AuthError } from "./auth.errors";
@@ -10,6 +15,7 @@ import { REFRESH_TOKEN_TTL_SECONDS } from "./token/token.config";
 import { sessionRepository } from "./session.repository";
 import { resetRepository } from "./reset/reset.repository";
 import { OAuth2Client } from "google-auth-library";
+import crypto from "node:crypto";
 
 const googleClient = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -35,7 +41,6 @@ const RESET_TTL_MS = 30 * 60 * 1000; // 30 minutes
 export const authService = {
   async register(dto: RegisterDto) {
     const email = normalizeEmail(dto.email);
-
 
     const existingUser = await authRepository.findUserByEmail(email);
     if (existingUser) {
@@ -305,20 +310,43 @@ export const authService = {
   },
 
   async getGoogleAuthUrl() {
+    // Generate secure random state for CSRF protection
+    const state = crypto.randomBytes(32).toString("hex");
+
+    // Store state in database with expiration
+    await createOAuthState(state, "GOOGLE", {
+      ip: null, // Request metadata will be added if needed
+      userAgent: null,
+    });
+
     return googleClient.generateAuthUrl({
       access_type: "offline",
       scope: [
+        "openid",
         "https://www.googleapis.com/auth/userinfo.profile",
         "https://www.googleapis.com/auth/userinfo.email",
       ],
       prompt: "consent",
+      state: state, // Include state parameter
     });
   },
 
   async loginWithGoogle(
     code: string,
+    state: string,
     meta: { userAgent?: string; ip?: string }
   ) {
+    // Verify state parameter for CSRF protection
+    const oAuthState = await findAndConsumeOAuthState(state);
+    if (!oAuthState) {
+      throw AuthError.unauthorized("INVALID_OR_EXPIRED_STATE");
+    }
+
+    // Verify provider matches
+    if (oAuthState.provider !== "GOOGLE") {
+      throw AuthError.unauthorized("INVALID_STATE_PROVIDER");
+    }
+
     const { tokens } = await googleClient.getToken(code);
     googleClient.setCredentials(tokens);
 
@@ -406,5 +434,10 @@ export const authService = {
 
       return { accessToken, refreshTokenPlain };
     });
+  },
+
+  // Cleanup expired OAuth states (should be called periodically)
+  async cleanupExpiredOAuthStates() {
+    await cleanupExpiredOAuthStates();
   },
 };
