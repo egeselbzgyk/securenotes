@@ -25,7 +25,9 @@ export const createAuthHandler = async (req: Request, res: Response) => {
     res.status(201).json({ id: user.id });
   } catch (error) {
     if (error instanceof ZodError) {
-      res.status(400).json({ message: "Ungültige Daten", errors: error.issues });
+      res
+        .status(400)
+        .json({ message: "Ungültige Daten", errors: error.issues });
       return;
     }
     if (error instanceof AuthError) {
@@ -243,7 +245,6 @@ export async function logoutAllHandler(req: Request, res: Response) {
   return res.status(200).json({ ok: true });
 }
 
-
 export async function googleLoginHandler(req: Request, res: Response) {
   try {
     const url = await authService.getGoogleAuthUrl();
@@ -255,13 +256,17 @@ export async function googleLoginHandler(req: Request, res: Response) {
 
 export async function googleLoginCallbackHandler(req: Request, res: Response) {
   try {
-    const { code } = req.query;
+    const { code, state } = req.query;
     if (!code || typeof code !== "string") {
+      return res.status(400).json({ ok: false });
+    }
+    if (!state || typeof state !== "string") {
       return res.status(400).json({ ok: false });
     }
 
     const { refreshTokenPlain } = await authService.loginWithGoogle(
       code,
+      state,
       {
         userAgent: req.get("user-agent"),
         ip: req.ip,

@@ -57,11 +57,18 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}) {
   let response = await fetch(url, config);
 
   // 4. Handle 401 (Unauthorized) - Attempt Silent Refresh
-  // Condition: 401 and NOT already on the refresh endpoint
+  // Condition: 401 and NOT already on the refresh endpoint AND NOT on public pages
+  const isPublicPage =
+    endpoint === "" ||
+    endpoint === "/datenschutz" ||
+    endpoint === "/impressum" ||
+    endpoint.startsWith("/verify-email") ||
+    endpoint.startsWith("/reset-password");
   if (
     response.status === 401 &&
     !endpoint.includes("/auth/refresh") &&
-    !endpoint.includes("/auth/login")
+    !endpoint.includes("/auth/login") &&
+    !isPublicPage // ← Don't refresh on public pages
   ) {
     try {
       // POST /auth/refresh
